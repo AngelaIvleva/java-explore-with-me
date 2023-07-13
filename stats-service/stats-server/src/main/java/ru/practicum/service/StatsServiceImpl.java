@@ -15,12 +15,12 @@ import static ru.practicum.mapper.StatsMapper.STATS_MAPPER;
 
 @Slf4j
 @RequiredArgsConstructor
-@Transactional(readOnly = true)
 @Service
 public class StatsServiceImpl implements StatsService {
 
     private final StatsRepository statsRepository;
 
+    @Transactional
     @Override
     public void postHit(EndpointHit hit) {
         statsRepository.save(STATS_MAPPER.endpointHitToStats(hit));
