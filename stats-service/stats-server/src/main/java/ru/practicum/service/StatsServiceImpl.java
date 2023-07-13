@@ -32,7 +32,7 @@ public class StatsServiceImpl implements StatsService {
         if (uris == null || uris.isEmpty()) {
             if (unique) {
                 log.info("Получение статистики с {} по {} unique == true", start, end);
-                return statsRepository.getAllStatsDistinctIp(start, end);
+                return statsRepository.getAllUniqueStats(start, end);
             } else {
                 log.info("Получение статистики с {} по {} unique == false", start, end);
                 return statsRepository.getAllStats(start, end);
@@ -40,7 +40,7 @@ public class StatsServiceImpl implements StatsService {
         } else {
             if (unique) {
                 log.info("Получение статистики по uris с {} по {} unique == true", start, end);
-                return statsRepository.getStatsByUrisDistinctIp(start, end, uris);
+                return statsRepository.getUniqueStatsByUris(start, end, uris);
             } else {
                 log.info("Получение статистики по uris с {} по {} unique == false", start, end);
                 return statsRepository.getStatsByUris(start, end, uris);
