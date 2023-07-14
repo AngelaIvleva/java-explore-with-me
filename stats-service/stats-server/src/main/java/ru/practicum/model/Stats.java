@@ -27,7 +27,7 @@ public class Stats {
     @Column(nullable = false, length = 256)
     private String uri;
 
-    @Column(nullable = false, length = 15)
+    @Column(nullable = false, length = 64)
     private String ip;
 
     @Column(name = "time_stamp", nullable = false)
