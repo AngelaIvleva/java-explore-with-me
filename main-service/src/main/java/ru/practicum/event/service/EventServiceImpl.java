@@ -50,7 +50,6 @@ public class EventServiceImpl implements EventService {
                                                    LocalDateTime rangeStart,
                                                    LocalDateTime rangeEnd,
                                                    Pageable pageable) {
-
         if (states == null && rangeStart == null && rangeEnd == null) {
             return eventRepository.findAll(pageable)
                     .stream()
@@ -77,11 +76,13 @@ public class EventServiceImpl implements EventService {
                 rangeStart,
                 rangeEnd,
                 pageable);
-        return setViewsAndConfirmedRequests(events);
+
+        return events.stream()
+                .map(EVENT_MAPPER::toEventFullDto)
+                .collect(Collectors.toList());
     }
 
     @Override
-    @Transactional
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest request) {
         Event event = checkExistence.checkEvent(eventId);
         if (request.getEventDate() != null) {
@@ -114,6 +115,7 @@ public class EventServiceImpl implements EventService {
     }
 
     @Override
+    @Transactional
     public List<EventShortDto> findAllEventsByPublic(String text,
                                                      List<Long> categories,
                                                      Boolean paid,
@@ -141,22 +143,23 @@ public class EventServiceImpl implements EventService {
                 pageable);
 
         statsClient.postHit("ewm-main-service", request.getRequestURI(), request.getRemoteAddr(), LocalDateTime.now());
-        List<EventFullDto> eventFullDtoList = setViewsAndConfirmedRequests(events);
+        List<Event> eventList = setViewsAndConfirmedRequests(events);
 
         if (sort != null && sort.equals(VIEWS))
-            eventFullDtoList.sort((e1, e2) -> e2.getViews().compareTo(e1.getViews()));
+            eventList.sort((e1, e2) -> e2.getViews().compareTo(e1.getViews()));
         if (onlyAvailable) {
-            return eventFullDtoList.stream()
+            return eventList.stream()
                     .filter(event -> event.getParticipantLimit() <= event.getConfirmedRequests())
                     .map(EVENT_MAPPER::toEventShortDto)
                     .collect(Collectors.toList());
         } else {
-            return eventFullDtoList.stream()
+            return eventList.stream()
                     .map(EVENT_MAPPER::toEventShortDto)
                     .collect(Collectors.toList());
         }
     }
 
+    @Transactional
     @Override
     public EventFullDto findEventById(Long id, HttpServletRequest request) {
         Event event = checkExistence.checkEvent(id);
@@ -169,12 +172,12 @@ public class EventServiceImpl implements EventService {
                 .stream()
                 .filter(s -> Objects.equals(s.getUri(), request.getRequestURI()))
                 .count();
-        EventFullDto eventFullDto = EVENT_MAPPER.toEventFullDto(event);
-        eventFullDto.setViews(hits + 1);
-        eventFullDto.setConfirmedRequests(requestRepository.findAllByEventIdInAndStatus(List.of(id),
+
+        event.setViews(hits + 1);
+        event.setConfirmedRequests((long) requestRepository.findAllByEventIdInAndStatus(List.of(id),
                 RequestStatus.CONFIRMED).size());
         log.info("Запрошено событие с id {}", id);
-        return eventFullDto;
+        return EVENT_MAPPER.toEventFullDto(eventRepository.save(event));
     }
 
     @Override
@@ -282,7 +285,7 @@ public class EventServiceImpl implements EventService {
         return event;
     }
 
-    private List<EventFullDto> setViewsAndConfirmedRequests(List<Event> events) {
+    private List<Event> setViewsAndConfirmedRequests(List<Event> events) {
         List<Long> eventIds = events
                 .stream()
                 .map(Event::getId)
@@ -290,7 +293,6 @@ public class EventServiceImpl implements EventService {
 
         List<ViewStats> viewStatsList = statsClient.getStats(eventIds, false);
         Map<Long, Long> views;
-
         if (viewStatsList != null && !viewStatsList.isEmpty()) {
             views = viewStatsList
                     .stream()
@@ -298,18 +300,18 @@ public class EventServiceImpl implements EventService {
         } else {
             views = Collections.emptyMap();
         }
-        List<EventFullDto> eventFullDtoList = events
-                .stream()
-                .map(EVENT_MAPPER::toEventFullDto)
-                .collect(Collectors.toList());
 
-        eventFullDtoList.forEach(eventFullDto ->
-                eventFullDto.setViews(views.getOrDefault(eventFullDto.getId(), 0L)));
+        events.forEach(event ->
+                event.setViews(views.getOrDefault(event.getId(), 0L)));
 
-        eventFullDtoList.forEach(eventFullDto ->
-                eventFullDto.setConfirmedRequests(requestRepository.findAllByEventIdInAndStatus(new ArrayList<>(eventIds),
+        events.forEach(event ->
+                event.setConfirmedRequests((long) requestRepository.findAllByEventIdInAndStatus(new ArrayList<>(eventIds),
                         RequestStatus.CONFIRMED).size()));
-        return eventFullDtoList;
+
+        return events
+                .stream()
+                .map(eventRepository::save)
+                .collect(Collectors.toList());
     }
 
     private Long getEventIdFromURI(ViewStats viewStats) {
