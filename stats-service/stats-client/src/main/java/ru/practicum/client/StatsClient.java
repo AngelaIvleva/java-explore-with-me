@@ -13,13 +13,16 @@ import ru.practicum.dto.EndpointHit;
 import ru.practicum.dto.ViewStats;
 
 import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class StatsClient {
 
     protected final RestTemplate rest;
+    private final DateTimeFormatter formatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
 
     public StatsClient(@Value("${stats-server.url}") String serverUrl, RestTemplateBuilder builder) {
         this.rest = builder
@@ -35,14 +38,14 @@ public class StatsClient {
                 .ip(ip)
                 .timestamp(timestamp)
                 .build();
-        rest.exchange("/hit", HttpMethod.POST, new HttpEntity<>(hit), Void.class);
+        rest.postForEntity("/hit", new HttpEntity<>(hit), Void.class);
     }
 
-    public List<ViewStats> getStats(LocalDateTime start, LocalDateTime end, List<String> uris, Boolean unique) {
+    public List<ViewStats> getStats(List<Long> id, Boolean unique) {
         Map<String, Object> parameters = Map.of(
-                "start", start,
-                "end", end,
-                "uris", String.join(",", uris),
+                "start", LocalDateTime.now().minusYears(5).format(formatter),
+                "end", LocalDateTime.now().plusYears(5).format(formatter),
+                "uris", (id.stream().map(eventId -> "/events/" + eventId).collect(Collectors.toList())),
                 "unique", unique
         );
         return rest.exchange("/stats?start={start}&end={end}&uris={uris}&unique={unique}", HttpMethod.GET,
