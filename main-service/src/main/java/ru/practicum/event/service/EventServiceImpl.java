@@ -19,6 +19,7 @@ import ru.practicum.exception.NotFoundException;
 import ru.practicum.exception.ValidationException;
 import ru.practicum.location.repository.LocationRepository;
 import ru.practicum.request.enums.RequestStatus;
+import ru.practicum.request.model.ParticipationRequest;
 import ru.practicum.request.repository.RequestRepository;
 import ru.practicum.user.model.User;
 import ru.practicum.util.ObjectCheckExistence;
@@ -304,14 +305,16 @@ public class EventServiceImpl implements EventService {
         events.forEach(event ->
                 event.setViews(views.getOrDefault(event.getId(), 0L)));
 
-        events.forEach(event ->
-                event.setConfirmedRequests((long) requestRepository.findAllByEventIdInAndStatus(new ArrayList<>(eventIds),
-                        RequestStatus.CONFIRMED).size()));
-
-        return events
+        Map<Event, Long> confirmedRequestsCountMap = requestRepository
+                .findAllByEventIdInAndStatus(eventIds, RequestStatus.CONFIRMED)
                 .stream()
-                .map(eventRepository::save)
-                .collect(Collectors.toList());
+                .collect(Collectors.groupingBy(ParticipationRequest::getEvent, Collectors.counting()));
+
+        events.forEach(event -> {
+            Long confirmedRequestsCount = confirmedRequestsCountMap.getOrDefault(event, 0L);
+            event.setConfirmedRequests(confirmedRequestsCount);
+        });
+        return eventRepository.saveAll(events);
     }
 
     private Long getEventIdFromURI(ViewStats viewStats) {

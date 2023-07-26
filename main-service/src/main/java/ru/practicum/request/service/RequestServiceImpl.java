@@ -159,8 +159,8 @@ public class RequestServiceImpl implements RequestService {
                 event.setConfirmedRequests(event.getConfirmedRequests() + 1);
                 confirmed.add(REQUEST_MAPPER.toParticipationRequestDto(request));
             }
-            requestRepository.save(request);
         }
+        requestRepository.saveAll(requestList);
         return EventRequestStatusUpdateResult.builder()
                 .confirmedRequests(confirmed)
                 .rejectedRequests(rejected)
