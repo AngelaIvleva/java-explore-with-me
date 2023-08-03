@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.UpdateEventAdminRequest;
 import ru.practicum.event.enums.State;
-import ru.practicum.event.service.EventService;
+import ru.practicum.event.service.AdminEventService;
 
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
@@ -19,7 +19,7 @@ import java.util.List;
 @RequestMapping("/admin/events")
 public class AdminEventController {
 
-    private final EventService eventService;
+    private final AdminEventService eventService;
 
     private static final String FORMATTER = "yyyy-MM-dd HH:mm:ss";
 

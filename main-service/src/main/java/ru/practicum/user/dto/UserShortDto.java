@@ -17,10 +17,10 @@ import javax.validation.constraints.Size;
 public class UserShortDto {
     @NotBlank(message = "Имя не может быть пустым")
     @NotNull(message = "Имя не может быть пустым")
-    @Size(min = 2, max = 250)
+    @Size(min = 2, max = 250, message = "Min количество символов имени - 2, max - 250")
     private String name;
     @Email(message = "Некорректный адрес электронной почты")
     @NotNull(message = "Адрес электронной почты не может быть пустым")
-    @Size(min = 6, max = 254)
+    @Size(min = 6, max = 254, message = "Min количество символов электронной почты - 6, max - 254")
     private String email;
 }

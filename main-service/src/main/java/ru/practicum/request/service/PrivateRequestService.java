@@ -6,7 +6,7 @@ import ru.practicum.request.dto.ParticipationRequestDto;
 
 import java.util.List;
 
-public interface RequestService {
+public interface PrivateRequestService {
 
     List<ParticipationRequestDto> findByRequestorId(Long userId);
 

@@ -1,28 +1,27 @@
-package ru.practicum.compilation.service;
+package ru.practicum.compilation.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.compilation.dto.CompilationDto;
 import ru.practicum.compilation.dto.NewCompilationDto;
 import ru.practicum.compilation.dto.UpdateCompilationRequest;
 import ru.practicum.compilation.model.Compilation;
 import ru.practicum.compilation.repository.CompilationRepository;
+import ru.practicum.compilation.service.AdminCompilationService;
 import ru.practicum.event.model.Event;
 import ru.practicum.event.repository.EventRepository;
 import ru.practicum.util.ObjectCheckExistence;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Collectors;
 
 import static ru.practicum.compilation.mapper.CompilationMapper.COMPILATION_MAPPER;
 
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class CompilationServiceImpl implements CompilationService {
+public class AdminCompilationServiceImpl implements AdminCompilationService {
 
     private final CompilationRepository compilationRepository;
     private final EventRepository eventRepository;
@@ -30,14 +29,15 @@ public class CompilationServiceImpl implements CompilationService {
 
     @Override
     public CompilationDto addCompilationByAdmin(NewCompilationDto newCompilationDto) {
-        List<Event> events = new ArrayList<>();
-        if (newCompilationDto.getEvents() != null) {
-            events = eventRepository.findAllByIdIn(newCompilationDto.getEvents());
-        }
+        List<Event> events = newCompilationDto.getEvents() != null
+                ? eventRepository.findAllByIdIn(newCompilationDto.getEvents())
+                : new ArrayList<>();
+
         Compilation compilation = new Compilation();
         compilation.setPinned(newCompilationDto.getPinned());
         compilation.setTitle(newCompilationDto.getTitle());
         compilation.setEvents(events);
+
         compilationRepository.save(compilation);
         log.info("Сохранена подборка событий: title {}", compilation.getTitle());
         return COMPILATION_MAPPER.toCompilationDto(compilation);
@@ -65,25 +65,5 @@ public class CompilationServiceImpl implements CompilationService {
         compilationRepository.save(compilation);
         log.info("Обновлена подборка событий с id {}", compId);
         return COMPILATION_MAPPER.toCompilationDto(compilation);
-    }
-
-    @Override
-    public List<CompilationDto> findCompilationByPublic(Boolean pinned, PageRequest pageable) {
-        if (pinned != null) {
-            return compilationRepository.findAllByPinned(pinned, pageable)
-                    .stream()
-                    .map(COMPILATION_MAPPER::toCompilationDto)
-                    .collect(Collectors.toList());
-        }
-        return compilationRepository.findAll(pageable)
-                .stream()
-                .map(COMPILATION_MAPPER::toCompilationDto)
-                .collect(Collectors.toList());
-    }
-
-    @Override
-    public CompilationDto findCompilationById(Long compId) {
-        log.info("Запрошена подборка событий с id {}", compId);
-        return COMPILATION_MAPPER.toCompilationDto(checkExistence.checkCompilation(compId));
     }
 }

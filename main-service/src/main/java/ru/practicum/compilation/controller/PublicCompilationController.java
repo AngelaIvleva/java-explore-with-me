@@ -4,7 +4,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.*;
 import ru.practicum.compilation.dto.CompilationDto;
-import ru.practicum.compilation.service.CompilationService;
+import ru.practicum.compilation.service.PublicCompilationService;
 
 import javax.validation.constraints.Positive;
 import javax.validation.constraints.PositiveOrZero;
@@ -15,7 +15,7 @@ import java.util.List;
 @RequestMapping("/compilations")
 public class PublicCompilationController {
 
-    private final CompilationService compilationService;
+    private final PublicCompilationService compilationService;
 
     @GetMapping
     public List<CompilationDto> get(@RequestParam(value = "pinned", required = false) Boolean pinned,

@@ -2,7 +2,6 @@ package ru.practicum.event.dto;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import ru.practicum.location.model.Location;
@@ -14,25 +13,24 @@ import java.time.LocalDateTime;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Builder
 public class NewEventDto {
-    @NotNull
-    @Size(min = 20, max = 2000)
+    @NotNull(message = "Аннотация не может быть пустой")
+    @Size(min = 20, max = 2000, message = "Min количество символов аннотации - 20, max - 2000")
     private String annotation;
-    @NotNull
+    @NotNull(message = "Категория не может быть пустой")
     private Long category;
-    @NotNull
-    @Size(min = 20, max = 7000)
+    @NotNull(message = "Описание не может быть пустым")
+    @Size(min = 20, max = 7000, message = "Min количество символов описания - 20, max - 7000")
     private String description;
-    @NotNull
+    @NotNull(message = "Дата события не может быть пустой")
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd HH:mm:ss")
     private LocalDateTime eventDate;
-    @NotNull
+    @NotNull(message = "Локация не может быть пустой")
     private Location location;
-    private boolean paid;
+    private boolean paid = false;
     private int participantLimit;
     private Boolean requestModeration = true;
-    @NotNull
-    @Size(min = 3, max = 120)
+    @NotNull(message = "Заголовок не может быть пустым")
+    @Size(min = 3, max = 120, message = "Min количество символов заголовка - 3, max - 120")
     private String title;
 }

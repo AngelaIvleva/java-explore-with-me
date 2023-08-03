@@ -7,7 +7,7 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.EventShortDto;
 import ru.practicum.event.enums.Sort;
-import ru.practicum.event.service.EventService;
+import ru.practicum.event.service.PublicEventService;
 
 import javax.servlet.http.HttpServletRequest;
 import javax.validation.constraints.Positive;
@@ -20,7 +20,7 @@ import java.util.List;
 @RequestMapping("/events")
 public class PublicEventController {
 
-    private final EventService eventService;
+    private final PublicEventService eventService;
     private static final String FORMATTER = "yyyy-MM-dd HH:mm:ss";
 
     @GetMapping

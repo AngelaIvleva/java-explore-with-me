@@ -1,27 +1,25 @@
-package ru.practicum.category.service;
+package ru.practicum.category.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import ru.practicum.category.dto.CategoryDto;
 import ru.practicum.category.dto.NewCategoryDto;
 import ru.practicum.category.model.Category;
 import ru.practicum.category.repository.CategoryRepository;
+import ru.practicum.category.service.AdminCategoryService;
 import ru.practicum.event.repository.EventRepository;
 import ru.practicum.exception.ConflictException;
 import ru.practicum.util.ObjectCheckExistence;
 
-import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static ru.practicum.category.mapper.CategoryMapper.CATEGORY_MAPPER;
 
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class CategoryServiceImpl implements ru.practicum.category.service.CategoryService {
+public class AdminCategoryServiceImpl implements AdminCategoryService {
 
     private final CategoryRepository categoryRepository;
     private final EventRepository eventRepository;
@@ -29,12 +27,7 @@ public class CategoryServiceImpl implements ru.practicum.category.service.Catego
 
     @Override
     public CategoryDto createCategory(NewCategoryDto newCategoryDto) {
-        Optional<Category> cat = categoryRepository.findByName(newCategoryDto.getName());
-        if (cat.isPresent()) {
-            log.info("Категория с наименованием {} уже существует", newCategoryDto.getName());
-            throw new ConflictException(String.format("Категория с наименованием %s уже существует",
-                    newCategoryDto.getName()));
-        }
+        checkCategoryNameNotExist(newCategoryDto.getName());
         Category category = categoryRepository.save(CATEGORY_MAPPER.toCategory(newCategoryDto));
         log.info("Добавление категории {} с id {}", category.getName(), category.getId());
         return CATEGORY_MAPPER.toCategoryDto(category);
@@ -43,12 +36,8 @@ public class CategoryServiceImpl implements ru.practicum.category.service.Catego
     @Override
     public CategoryDto updateCategory(Long catId, NewCategoryDto newCategoryDto) {
         Category category = checkExistence.checkCategory(catId);
-        Optional<Category> cat = categoryRepository.findByName(newCategoryDto.getName());
-        if (cat.isPresent() && !category.getName().equals(newCategoryDto.getName())) {
-            log.info("Категория с наименованием {} уже существует", category.getName());
-            throw new ConflictException(String.format("Категория с наименованием %s уже существует",
-                    newCategoryDto.getName()));
-        }
+        checkCategoryNameNotConflict(category, newCategoryDto.getName());
+
         category.setName(newCategoryDto.getName());
         log.info("Обновление категории с id {}", category.getId());
         return CATEGORY_MAPPER.toCategoryDto(categoryRepository.save(category));
@@ -64,18 +53,19 @@ public class CategoryServiceImpl implements ru.practicum.category.service.Catego
         categoryRepository.deleteById(catId);
     }
 
-    @Override
-    public List<CategoryDto> getCategories(int from, int size) {
-        PageRequest pageable = PageRequest.of(from / size, size);
-        log.info("Запрошен список категорий по параметрам");
-        return categoryRepository.findAll(pageable).stream()
-                .map(CATEGORY_MAPPER::toCategoryDto)
-                .collect(Collectors.toList());
+    private void checkCategoryNameNotExist(String categoryName) {
+        Optional<Category> existingCategory = categoryRepository.findByName(categoryName);
+        if (existingCategory.isPresent()) {
+            log.info("Категория с наименованием {} уже существует", categoryName);
+            throw new ConflictException(String.format("Категория с наименованием %s уже существует", categoryName));
+        }
     }
 
-    @Override
-    public CategoryDto getCategoryById(Long catId) {
-        log.info("Запрошена категория с id {}", catId);
-        return CATEGORY_MAPPER.toCategoryDto(checkExistence.checkCategory(catId));
+    private void checkCategoryNameNotConflict(Category category, String newCategoryName) {
+        Optional<Category> existingCategory = categoryRepository.findByName(newCategoryName);
+        if (existingCategory.isPresent() && !category.getName().equals(newCategoryName)) {
+            log.info("Категория с наименованием {} уже существует", category.getName());
+            throw new ConflictException(String.format("Категория с наименованием %s уже существует", newCategoryName));
+        }
     }
 }

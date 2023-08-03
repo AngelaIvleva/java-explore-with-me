@@ -12,7 +12,7 @@ import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.util.MultiValueMap;
 import ru.practicum.controller.StatsController;
 import ru.practicum.dto.EndpointHit;
-import ru.practicum.service.StatsServiceImpl;
+import ru.practicum.service.impl.StatsServiceImpl;
 
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
