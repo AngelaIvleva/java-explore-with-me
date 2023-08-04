@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "0b29d4b5-003d-4d10-895c-9e7bc2245d32",
-		"name": "Feature comments",
+		"_postman_id": "92ad52de-e81d-4cff-a318-78ad22ae0f01",
+		"name": "Feature_comments",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "27720413"
 	},
@@ -1357,6 +1357,19 @@
 		},
 		{
 			"key": 29,
+			"value": ""
+		},
+		{
+			"key": 20,
+			"value": ""
+		},
+		{
+			"key": "base_url",
+			"value": "http://localhost:8080",
+			"type": "string"
+		},
+		{
+			"key": 42,
 			"value": ""
 		}
 	]
