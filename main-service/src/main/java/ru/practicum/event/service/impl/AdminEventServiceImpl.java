@@ -46,8 +46,14 @@ public class AdminEventServiceImpl implements AdminEventService {
         }
 
         checkStates(states);
-        checkRangeStart(rangeStart);
-        checkRangeEnd(rangeEnd);
+
+        if (rangeStart == null) {
+            rangeStart = LocalDateTime.now().minusYears(5);
+        }
+
+        if (rangeEnd == null) {
+            rangeEnd = LocalDateTime.now().plusYears(5);
+        }
         checkExistence.checkDateTime(rangeStart, rangeEnd);
 
         List<Event> events = eventRepository.findByParams(
@@ -78,18 +84,6 @@ public class AdminEventServiceImpl implements AdminEventService {
             states = new ArrayList<>();
             states.addAll(Stream.of(State.values())
                     .collect(Collectors.toList()));
-        }
-    }
-
-    private void checkRangeStart(LocalDateTime rangeStart) {
-        if (rangeStart == null) {
-            rangeStart = LocalDateTime.now().minusYears(5);
-        }
-    }
-
-    private void checkRangeEnd(LocalDateTime rangeEnd) {
-        if (rangeEnd == null) {
-            rangeEnd = LocalDateTime.now().plusYears(5);
         }
     }
 
