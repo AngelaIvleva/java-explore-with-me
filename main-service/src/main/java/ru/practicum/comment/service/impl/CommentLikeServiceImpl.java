@@ -43,6 +43,11 @@ public class CommentLikeServiceImpl implements CommentLikeService {
                     .likeType(type)
                     .build();
             likeRepository.save(newLike);
+            if (type == LikeType.LIKE) {
+                comment.setLikes(comment.getLikes() + 1);
+            } else {
+                comment.setDislikes(comment.getDislikes() + 1);
+            }
         } else {
             if (like.getLikeType() == type) {
                 throw new ConflictException("Нельзя поставить повторный like/dislike одному комментарию");
