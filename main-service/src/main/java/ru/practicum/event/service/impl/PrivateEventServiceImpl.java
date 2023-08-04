@@ -59,11 +59,7 @@ public class PrivateEventServiceImpl implements PrivateEventService {
     public EventFullDto findEventByUser(Long userId, Long eventId) {
         Event event = checkExistence.checkEvent(eventId);
         User user = checkExistence.checkUser(userId);
-
-        if (!event.getInitiator().equals(user)) {
-            throw new NotFoundException(String.format("Пользователь %s не является создателем события %d",
-                    user.getName(), event.getId()));
-        }
+        checkInitiator(event, user);
         return EVENT_MAPPER.toEventFullDto(event);
     }
 
@@ -73,16 +69,7 @@ public class PrivateEventServiceImpl implements PrivateEventService {
         validateEventDate(request.getEventDate());
 
         StateAction stateAction = request.getStateAction();
-        if (event.getState().equals(State.PUBLISHED)) {
-            throw new ConflictException("Изменить можно только отмененные события " +
-                    "или события в состоянии ожидания модерации");
-        } else {
-            if (stateAction == StateAction.SEND_TO_REVIEW) {
-                event.setState(State.PENDING);
-            } else if (stateAction == StateAction.CANCEL_REVIEW) {
-                event.setState(State.CANCELED);
-            }
-        }
+        setEventState(event, stateAction);
         return EVENT_MAPPER.toEventFullDto(eventRepository.save(eventServiceHelper.updateEvent(event, request)));
     }
 
@@ -102,5 +89,25 @@ public class PrivateEventServiceImpl implements PrivateEventService {
         event.setConfirmedRequests(0L);
         event.setViews(0L);
         return event;
+    }
+
+    private void checkInitiator(Event event, User user) {
+        if (!event.getInitiator().equals(user)) {
+            throw new NotFoundException(String.format("Пользователь %s не является создателем события %d",
+                    user.getName(), event.getId()));
+        }
+    }
+
+    private void setEventState(Event event, StateAction stateAction) {
+        if (event.getState().equals(State.PUBLISHED)) {
+            throw new ConflictException("Изменить можно только отмененные события " +
+                    "или события в состоянии ожидания модерации");
+        } else {
+            if (stateAction == StateAction.SEND_TO_REVIEW) {
+                event.setState(State.PENDING);
+            } else if (stateAction == StateAction.CANCEL_REVIEW) {
+                event.setState(State.CANCELED);
+            }
+        }
     }
 }

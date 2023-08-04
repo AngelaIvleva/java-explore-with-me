@@ -36,7 +36,7 @@ public class EventServiceHelper {
         return event;
     }
 
-    public void updateAnnotation(Event event, String annotation) {
+    private void updateAnnotation(Event event, String annotation) {
         if (annotation != null) {
             if (annotation.length() < MIN_ANNOTATION_LENGTH || annotation.length() > MAX_ANNOTATION_LENGTH) {
                 throw new ValidationException("Аннотация не может быть короче " + MIN_ANNOTATION_LENGTH +
@@ -46,13 +46,13 @@ public class EventServiceHelper {
         }
     }
 
-    public void updateCategory(Event event, Long categoryId) {
+    private void updateCategory(Event event, Long categoryId) {
         if (categoryId != null) {
             event.setCategory(checkExistence.checkCategory(categoryId));
         }
     }
 
-    public void updateDescription(Event event, String description) {
+    private void updateDescription(Event event, String description) {
         if (description != null) {
             if (description.length() < MIN_DESCRIPTION_LENGTH || description.length() > MAX_DESCRIPTION_LENGTH) {
                 throw new ValidationException("Описание не может быть короче " + MIN_DESCRIPTION_LENGTH +
@@ -62,31 +62,31 @@ public class EventServiceHelper {
         }
     }
 
-    public void updateLocation(Event event, Location location) {
+    private void updateLocation(Event event, Location location) {
         if (location != null) {
             event.setLocation(locationRepository.save(location));
         }
     }
 
-    public void updatePaid(Event event, Boolean paid) {
+    private void updatePaid(Event event, Boolean paid) {
         if (paid != null) {
             event.setPaid(paid);
         }
     }
 
-    public void updateParticipantLimit(Event event, Integer participantLimit) {
+    private void updateParticipantLimit(Event event, Integer participantLimit) {
         if (participantLimit != null) {
             event.setParticipantLimit(participantLimit);
         }
     }
 
-    public void updateRequestModeration(Event event, Boolean requestModeration) {
+    private void updateRequestModeration(Event event, Boolean requestModeration) {
         if (requestModeration != null) {
             event.setRequestModeration(requestModeration);
         }
     }
 
-    public void updateTitle(Event event, String title) {
+    private void updateTitle(Event event, String title) {
         if (title != null) {
             if (title.length() < MIN_TITLE_LENGTH || title.length() > MAX_TITLE_LENGTH) {
                 throw new ValidationException("Заголовок не может быть короче " + MIN_TITLE_LENGTH +

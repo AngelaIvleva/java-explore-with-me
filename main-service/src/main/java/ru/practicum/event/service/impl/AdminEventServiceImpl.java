@@ -44,19 +44,12 @@ public class AdminEventServiceImpl implements AdminEventService {
                     .map(EVENT_MAPPER::toEventFullDto)
                     .collect(Collectors.toList());
         }
-        if (states == null) {
-            states = new ArrayList<>();
-            states.addAll(Stream.of(State.values())
-                    .collect(Collectors.toList()));
-        }
 
-        if (rangeStart == null) {
-            rangeStart = LocalDateTime.now().minusYears(5);
-        }
-        if (rangeEnd == null) {
-            rangeEnd = LocalDateTime.now().plusYears(5);
-        }
+        checkStates(states);
+        checkRangeStart(rangeStart);
+        checkRangeEnd(rangeEnd);
         checkExistence.checkDateTime(rangeStart, rangeEnd);
+
         List<Event> events = eventRepository.findByParams(
                 users,
                 states,
@@ -73,13 +66,43 @@ public class AdminEventServiceImpl implements AdminEventService {
     @Override
     public EventFullDto updateEventByAdmin(Long eventId, UpdateEventAdminRequest request) {
         Event event = checkExistence.checkEvent(eventId);
+        setEventDate(event, request);
+        setEventState(event, request);
+
+        Event eventToSave = eventRepository.save(eventServiceHelper.updateEvent(event, request));
+        return EVENT_MAPPER.toEventFullDto(eventToSave);
+    }
+
+    private void checkStates(List<State> states) {
+        if (states == null) {
+            states = new ArrayList<>();
+            states.addAll(Stream.of(State.values())
+                    .collect(Collectors.toList()));
+        }
+    }
+
+    private void checkRangeStart(LocalDateTime rangeStart) {
+        if (rangeStart == null) {
+            rangeStart = LocalDateTime.now().minusYears(5);
+        }
+    }
+
+    private void checkRangeEnd(LocalDateTime rangeEnd) {
+        if (rangeEnd == null) {
+            rangeEnd = LocalDateTime.now().plusYears(5);
+        }
+    }
+
+    private void setEventDate(Event event, UpdateEventAdminRequest request) {
         if (request.getEventDate() != null) {
             if (LocalDateTime.now().isAfter(request.getEventDate())) {
                 throw new ValidationException("Дата начала мероприятия должна быть не ранее, " +
                         "чем через час с момента публикации");
             } else event.setEventDate(request.getEventDate());
         }
+    }
 
+    private void setEventState(Event event, UpdateEventAdminRequest request) {
         if (request.getStateAction() != null) {
             switch (request.getStateAction()) {
                 case PUBLISH_EVENT:
@@ -92,7 +115,6 @@ public class AdminEventServiceImpl implements AdminEventService {
                     throw new ValidationException(String.format("Некорректный StateAction: %s", request.getStateAction()));
             }
         }
-        return EVENT_MAPPER.toEventFullDto(eventRepository.save(eventServiceHelper.updateEvent(event, request)));
     }
 
     private void setPublishedState(Event event) {
