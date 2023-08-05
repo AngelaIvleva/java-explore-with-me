@@ -9,7 +9,7 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import ru.practicum.dto.EndpointHit;
 import ru.practicum.dto.ViewStats;
 import ru.practicum.repository.StatsRepository;
-import ru.practicum.service.StatsServiceImpl;
+import ru.practicum.service.impl.StatsServiceImpl;
 
 import java.time.LocalDateTime;
 import java.util.List;

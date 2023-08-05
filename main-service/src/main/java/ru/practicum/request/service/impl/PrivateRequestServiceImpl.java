@@ -1,4 +1,4 @@
-package ru.practicum.request.service;
+package ru.practicum.request.service.impl;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -13,6 +13,7 @@ import ru.practicum.request.dto.ParticipationRequestDto;
 import ru.practicum.request.enums.RequestStatus;
 import ru.practicum.request.model.ParticipationRequest;
 import ru.practicum.request.repository.RequestRepository;
+import ru.practicum.request.service.PrivateRequestService;
 import ru.practicum.user.model.User;
 import ru.practicum.util.ObjectCheckExistence;
 
@@ -29,7 +30,7 @@ import static ru.practicum.request.mapper.RequestMapper.REQUEST_MAPPER;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class RequestServiceImpl implements RequestService {
+public class PrivateRequestServiceImpl implements PrivateRequestService {
 
     private final RequestRepository requestRepository;
     private final EventRepository eventRepository;
@@ -44,50 +45,27 @@ public class RequestServiceImpl implements RequestService {
                 .collect(Collectors.toList());
     }
 
-
     @Override
     public ParticipationRequestDto addRequest(Long userId, Long eventId) {
         User user = checkExistence.checkUser(userId);
         Event event = checkExistence.checkEvent(eventId);
 
-        ParticipationRequest request = ParticipationRequest.builder()
-                .created(LocalDateTime.now())
-                .event(event)
-                .requester(user)
-                .status(event.getRequestModeration() ? PENDING : CONFIRMED)
-                .build();
+        ParticipationRequest request = createRequest(event, user);
+        checkExistsRequest(eventId, userId);
+        checkInitiator(event, user);
+        checkEventState(event);
+        checkParticipantLimit(event, request);
+        setConfirmedRequests(event, request);
 
-        Optional<ParticipationRequest> req = requestRepository.findByRequesterIdAndEventId(userId, eventId);
-        if (req.isPresent()) {
-            throw new ConflictException("Нельзя добавить повторный запрос");
-        }
-        if (event.getInitiator().equals(user)) {
-            throw new ConflictException("Инициатор события не может добавить запрос на участие в своём событии");
-        }
-        if (event.getState() != PUBLISHED) {
-            throw new ConflictException("Нельзя участвовать в неопубликованном событии");
-        }
-        if (event.getParticipantLimit() > 0) {
-            if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
-                throw new ConflictException("Достигнут лимит запросов на участие");
-            }
-        } else {
-            request.setStatus(RequestStatus.CONFIRMED);
-        }
-
-        if (request.getStatus() == CONFIRMED) {
-            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
-            eventRepository.save(event);
-        }
         log.info("Добавление запроса на участие в событии id {}", event.getId());
         return REQUEST_MAPPER.toParticipationRequestDto(requestRepository.save(request));
     }
-
 
     @Override
     public ParticipationRequestDto cancelRequest(Long userId, Long requestId) {
         User user = checkExistence.checkUser(userId);
         ParticipationRequest request = checkExistence.checkRequest(requestId);
+
         if (!request.getRequester().equals(user)) {
             throw new ConflictException("Нельзя отменить чужой запрос на участие");
         }
@@ -119,18 +97,11 @@ public class RequestServiceImpl implements RequestService {
         User user = checkExistence.checkUser(userId);
         Event event = checkExistence.checkEvent(eventId);
 
-        if (!event.getInitiator().equals(user)) {
-            throw new ValidationException("Принять заявку может только инициатор события");
-        }
-        if (event.getParticipantLimit() <= event.getConfirmedRequests() && event.getParticipantLimit() != 0) {
-            throw new ConflictException("нельзя подтвердить заявку, если уже достигнут лимит заявок на данное событие");
-        }
-
+        checkEventInitiator(event, user);
+        checkLimit(event);
         List<ParticipationRequest> requestList = requestRepository.findAllByIdIn(updateRequest.getRequestIds());
+        checkRequests(requestList, updateRequest);
 
-        if (requestList.size() != updateRequest.getRequestIds().size()) {
-            throw new ConflictException("События не найдены");
-        }
         log.info("Изменение статуса (подтверждена, отменена) заявок на участие в событии id {} пользователя id {}",
                 eventId, userId);
 
@@ -182,5 +153,69 @@ public class RequestServiceImpl implements RequestService {
                 .confirmedRequests(new ArrayList<>())
                 .rejectedRequests(rejected)
                 .build();
+    }
+
+    private void checkEventInitiator(Event event, User user) {
+        if (!event.getInitiator().equals(user)) {
+            throw new ValidationException("Принять заявку может только инициатор события");
+        }
+    }
+
+    private void checkLimit(Event event) {
+        if (event.getParticipantLimit() <= event.getConfirmedRequests() && event.getParticipantLimit() != 0) {
+            throw new ConflictException("Нельзя подтвердить заявку, если уже достигнут лимит заявок на данное событие");
+        }
+    }
+
+    private void checkRequests(List<ParticipationRequest> requestList,
+                               EventRequestStatusUpdateRequest updateRequest) {
+        if (requestList.size() != updateRequest.getRequestIds().size()) {
+            throw new ConflictException("События не найдены");
+        }
+    }
+
+    private ParticipationRequest createRequest(Event event, User user) {
+        return ParticipationRequest.builder()
+                .created(LocalDateTime.now())
+                .event(event)
+                .requester(user)
+                .status(event.getRequestModeration() ? PENDING : CONFIRMED)
+                .build();
+    }
+
+    private void checkExistsRequest(Long eventId, Long userId) {
+        Optional<ParticipationRequest> req = requestRepository.findByRequesterIdAndEventId(userId, eventId);
+        if (req.isPresent()) {
+            throw new ConflictException("Нельзя добавить повторный запрос");
+        }
+    }
+
+    private void checkInitiator(Event event, User user) {
+        if (event.getInitiator().equals(user)) {
+            throw new ConflictException("Инициатор события не может добавить запрос на участие в своём событии");
+        }
+    }
+
+    private void checkEventState(Event event) {
+        if (event.getState() != PUBLISHED) {
+            throw new ConflictException("Нельзя участвовать в неопубликованном событии");
+        }
+    }
+
+    private void checkParticipantLimit(Event event, ParticipationRequest request) {
+        if (event.getParticipantLimit() > 0) {
+            if (event.getConfirmedRequests() >= event.getParticipantLimit()) {
+                throw new ConflictException("Достигнут лимит запросов на участие");
+            }
+        } else {
+            request.setStatus(RequestStatus.CONFIRMED);
+        }
+    }
+
+    private void setConfirmedRequests(Event event, ParticipationRequest request) {
+        if (request.getStatus() == CONFIRMED) {
+            event.setConfirmedRequests(event.getConfirmedRequests() + 1);
+            eventRepository.save(event);
+        }
     }
 }

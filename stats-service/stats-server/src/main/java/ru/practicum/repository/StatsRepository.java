@@ -16,7 +16,7 @@ public interface StatsRepository extends JpaRepository<Stats, Long> {
             "GROUP BY st.app, st.uri " +
             "ORDER BY COUNT(DISTINCT st.ip) DESC")
     List<ViewStats> getAllUniqueStats(@Param("start") LocalDateTime start,
-                                          @Param("end") LocalDateTime end);
+                                      @Param("end") LocalDateTime end);
 
     @Query("SELECT new ru.practicum.dto.ViewStats(st.app, st.uri, COUNT(st.ip)) " +
             "FROM Stats AS st " +
@@ -33,8 +33,8 @@ public interface StatsRepository extends JpaRepository<Stats, Long> {
             "GROUP BY st.app, st.uri " +
             "ORDER BY COUNT(DISTINCT st.ip) DESC")
     List<ViewStats> getUniqueStatsByUris(@Param("start") LocalDateTime start,
-                                             @Param("end") LocalDateTime end,
-                                             @Param("uris") List<String> uris);
+                                         @Param("end") LocalDateTime end,
+                                         @Param("uris") List<String> uris);
 
     @Query("SELECT new ru.practicum.dto.ViewStats(st.app, st.uri, COUNT(st.ip)) " +
             "FROM Stats AS st " +

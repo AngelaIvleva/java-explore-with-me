@@ -16,6 +16,6 @@ import javax.validation.constraints.Size;
 public class NewCategoryDto {
     @NotNull(message = "Наименование категории не может быть пустым")
     @NotBlank(message = "Наименование категории не может быть пустым")
-    @Size(min = 1, max = 50)
+    @Size(min = 1, max = 50, message = "Min количество символов нименования категории - 1, max - 50")
     private String name;
 }

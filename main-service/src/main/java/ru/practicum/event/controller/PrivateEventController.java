@@ -7,11 +7,11 @@ import org.springframework.web.bind.annotation.*;
 import ru.practicum.event.dto.EventFullDto;
 import ru.practicum.event.dto.NewEventDto;
 import ru.practicum.event.dto.UpdateEventUserRequest;
-import ru.practicum.event.service.EventService;
+import ru.practicum.event.service.PrivateEventService;
 import ru.practicum.request.dto.EventRequestStatusUpdateRequest;
 import ru.practicum.request.dto.EventRequestStatusUpdateResult;
 import ru.practicum.request.dto.ParticipationRequestDto;
-import ru.practicum.request.service.RequestService;
+import ru.practicum.request.service.PrivateRequestService;
 
 import javax.validation.Valid;
 import javax.validation.constraints.Positive;
@@ -23,9 +23,9 @@ import java.util.List;
 @RequestMapping("/users/{userId}/events")
 public class PrivateEventController {
 
-    private final EventService eventService;
+    private final PrivateEventService eventService;
 
-    private final RequestService requestService;
+    private final PrivateRequestService requestService;
 
     @GetMapping
     public List<EventFullDto> getAllEvents(@PathVariable Long userId,
